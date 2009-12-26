@@ -115,7 +115,7 @@ class OutputPanel(UniqueById):
 
     def write(self, text, tag = None):
         buffer = self['view'].get_buffer()
-        
+	
         end_iter = buffer.get_end_iter()
         insert = buffer.create_mark(None, end_iter, True)
 
@@ -131,7 +131,7 @@ class OutputPanel(UniqueById):
             end.forward_chars(m.end(0))
             
             filename = m.group(1)
-            
+
             if (os.path.isabs(filename) and os.path.isfile(filename)) or \
                (os.path.isfile(os.path.join(self.cwd, filename))):
                 buffer.apply_tag(self.link_tag, start, end)

@@ -1,0 +1,14 @@
+Test.java:9: incompatible types
+found   : java.lang.String
+required: int
+		int a = "xxx";
+		        ^
+Test.java:10: incompatible types
+found   : int
+required: java.lang.String
+		String str = 45;
+		             ^
+Test.java:11: non-static method go() cannot be referenced from a static context
+		go();
+		^
+3 errors

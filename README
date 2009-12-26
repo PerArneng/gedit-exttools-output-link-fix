@@ -1,0 +1,8 @@
+
+ABOUT
+
+  This project aims to fix the linking of files from the output of the
+  externaltools plugin in gedit. The goal is to support parsing of different
+  outputs from compilers and tools and provide link so that the correct source
+  file should be opened in the editor.
+
