@@ -20,12 +20,15 @@ import re
 
 class Link:
 
-    def __init__(self, path, line_nr):
+    def __init__(self, path, line_nr, start, end):
         self._path = path
         self._line_nr = line_nr
+        self._start = start
+        self._end = end
 
     def __repr__(self):
-        return "%s[%s]" % (self._path, self._line_nr)
+        return "%s[%s](%s:%s)" % (self._path, self._line_nr, 
+                                  self._start, self._end)
 
 class LinkParser:
 
@@ -57,7 +60,9 @@ class GccLinkParserProvider(LinkParserProvider):
         for m in re.finditer(self.fm, text):
             path = m.group(1)
             line_nr = m.group(2)
-            link = Link(path, line_nr)
+            start = m.start(1)
+            end = m.end(2)
+            link = Link(path, line_nr, start, end)
             links.append(link)
 
         return links

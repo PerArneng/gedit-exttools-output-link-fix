@@ -36,8 +36,7 @@ test.c:13: error: too few arguments to function 'f'
 test.c:14: error: expected ';' before 'return'
 """
         links = self.p.parse(gcc_output)
-        for lnk in links:
-            print lnk
+        self.assertEquals(len(links), 6, 'incorrect nr of links')
 
 if __name__ == '__main__':
     unittest.main()
