@@ -24,6 +24,9 @@ class Link:
         self._path = path
         self._line_nr = line_nr
 
+    def __repr__(self):
+        return "%s[%s]" % (self._path, self._line_nr)
+
 class LinkParser:
 
     def __init__(self):
@@ -31,15 +34,13 @@ class LinkParser:
             GccLinkParserProvider()
         ]
 
-    def parse(self, line):
-        link = None
+    def parse(self, text):
+        links = []
 
         for provider in self._providers:
-            lnk = provider.parse(line)
-            if lnk is not None:
-                link = lnk
+            links.extend(provider.parse(text))
 
-        return link
+        return links
 
 class LinkParserProvider:
 
@@ -51,11 +52,14 @@ class GccLinkParserProvider(LinkParserProvider):
     def __init__(self):
         self.fm = re.compile("^(.*)\:(\d+)\:", re.MULTILINE)
 
-    def parse(self, line):
-        for m in re.finditer(self.fm, line):
-            print "%s %s" % (m.group(1), m.group(2))
-        
-        print line
-        return None
+    def parse(self, text):
+        links = []
+        for m in re.finditer(self.fm, text):
+            path = m.group(1)
+            line_nr = m.group(2)
+            link = Link(path, line_nr)
+            links.append(link)
+
+        return links
 
 

@@ -35,7 +35,9 @@ test.c:12: warning: initialization makes integer from pointer without a cast
 test.c:13: error: too few arguments to function 'f'
 test.c:14: error: expected ';' before 'return'
 """
-        self.p.parse(gcc_output)
+        links = self.p.parse(gcc_output)
+        for lnk in links:
+            print lnk
 
 if __name__ == '__main__':
     unittest.main()
