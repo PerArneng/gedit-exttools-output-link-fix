@@ -47,6 +47,12 @@ class LinkParser:
     from a compiler that specifies an error in a specific file. The path of the
     file, the line nr and some more info is then returned so that it can be used
     to be able to navigate from the error output in to the specific file.
+
+    The actual work of parsing the text is done by instances of classes that
+    inherits from LinkParserProvider. To add a new parser just create a class
+    that inherits from LinkParserProvider and override the parse method. Then
+    you need to register the class in the _provider list of this class wich is
+    done in the class constructor.
     """
 
     def __init__(self):
@@ -58,7 +64,8 @@ class LinkParser:
         """
         Parses the given text and returns a list of links that are parsed from
         the text. This method delegates to parser providers that can parse
-        output from different kinds of formats.
+        output from different kinds of formats. If no links are found then an
+        empty list is returned.
 
         text -- the text to scan for file links. 'text' can not be None.
         """
@@ -75,8 +82,16 @@ class LinkParser:
 class LinkParserProvider:
     """The "abstract" base class for link parses"""
 
-    def parse(self, line):
-        """This method should be implemented by subclasses"""
+    def parse(self, text):
+        """
+        This method should be implemented by subclasses. It takes a text as
+        argument (never None) and then returns a list of Link objects. If no
+        links are found then an empty list is expected. The Link class is
+        defined in this module. If you do not override this method then a
+        NotImplementedError will be thrown. 
+
+        text -- the text to parse. This argument is never None.
+        """
         raise NotImplementedError("need to implement a parse method")
 
 class GccLinkParserProvider(LinkParserProvider):
