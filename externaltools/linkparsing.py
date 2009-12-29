@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#    Gedit External Tools plugin
+#
 #    Copyright (C) 2009-2010  Per Arneng <per.arneng@anyplanet.com>
 #
 #    This program is free software; you can redistribute it and/or modify
@@ -19,18 +19,35 @@
 import re
 
 class Link:
+    """
+    This class represents a file link from within a string given by the
+    output of some software tool.
+    """
 
     def __init__(self, path, line_nr, start, end):
-        self._path = path
-        self._line_nr = line_nr
-        self._start = start
-        self._end = end
+        """
+        path -- the path of the file (that could be extracted)
+        line_nr -- the line nr of the specified file
+        start -- the index within the string that the link starts at
+        end -- the index within the string where the link ends at
+        """
+        self.path    = path
+        self.line_nr = int(line_nr)
+        self.start   = start
+        self.end     = end
 
     def __repr__(self):
         return "%s[%s](%s:%s)" % (self._path, self._line_nr, 
                                   self._start, self._end)
 
 class LinkParser:
+    """
+    Parses a text using different parsing providers with the goal of finding one
+    or more file links within the text. A typicak example could be the output
+    from a compiler that specifies an error in a specific file. The path of the
+    file, the line nr and some more info is then returned so that it can be used
+    to be able to navigate from the error output in to the specific file.
+    """
 
     def __init__(self):
         self._providers = [
@@ -38,6 +55,16 @@ class LinkParser:
         ]
 
     def parse(self, text):
+        """
+        Parses the given text and returns a list of links that are parsed from
+        the text. This method delegates to parser providers that can parse
+        output from different kinds of formats.
+
+        text -- the text to scan for file links. 'text' can not be None.
+        """
+        if text is None:
+            raise ValueError("text can not be None")
+
         links = []
 
         for provider in self._providers:
@@ -46,8 +73,10 @@ class LinkParser:
         return links
 
 class LinkParserProvider:
+    """The "abstract" base class for link parses"""
 
     def parse(self, line):
+        """This method should be implemented by subclasses"""
         raise NotImplementedError("need to implement a parse method")
 
 class GccLinkParserProvider(LinkParserProvider):
