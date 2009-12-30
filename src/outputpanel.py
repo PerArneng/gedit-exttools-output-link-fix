@@ -29,6 +29,7 @@ import re
 import gio
 from linkparsing import LinkParser
 from linkparsing import GccLinkParserProvider
+from linkparsing import PythonLinkParserProvider
 
 class UniqueById:
     __shared_state = WeakKeyDictionary()
@@ -89,6 +90,7 @@ class OutputPanel(UniqueById):
 	
         self.link_parser = LinkParser()
         self.link_parser.add_parser_provider(GccLinkParserProvider())
+        self.link_parser.add_parser_provider(PythonLinkParserProvider())
         self.links = {}
 
     def set_process(self, process):
@@ -131,15 +133,20 @@ class OutputPanel(UniqueById):
         links = self.link_parser.parse(text)
         for lnk in links:
             start = buffer.get_iter_at_mark(insert)
-            start.forward_chars(lnk.start)
             end = start.copy()
+            start.forward_chars(lnk.start)
             end.forward_chars(lnk.end)
+            
             lnk.start = start.get_offset()
             lnk.end = end.get_offset()
-            lnk_tag = buffer.create_tag("%s[%s]" % (lnk.path, lnk.line_nr))
+            
+            tag_name = "link:%s[%s]" % (lnk.path, lnk.line_nr)
+            lnk_tag = buffer.create_tag(tag_name)
             lnk_tag.set_property('underline', pango.UNDERLINE_LOW)
             lnk_tag.set_property('foreground', 'blue')
-            self.links[lnk_tag] = lnk
+            
+            self.links[tag_name] = lnk
+            
             buffer.apply_tag(lnk_tag, start, end)
 
         buffer.delete_mark(insert)
@@ -182,8 +189,9 @@ class OutputPanel(UniqueById):
 
         lnk = None
         for tag in iter_at_xy.get_tags():
-            lnk = self.links[tag]
-            if lnk is not None:
+            tag_name = tag.get_property("name")
+            if tag_name.startswith("link:"):
+                lnk = self.links[tag_name]
                 break
 
         return lnk

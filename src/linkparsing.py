@@ -112,4 +112,22 @@ class GccLinkParserProvider(LinkParserProvider):
 
         return links
 
+class PythonLinkParserProvider(LinkParserProvider):
+
+    def __init__(self):
+        # example:
+        #  File "test.py", line 10, in <module>
+        self.fm = re.compile("^  File \"([^\"]+)\", line (\d+),", re.MULTILINE)
+
+    def parse(self, text):
+        links = []
+        for m in re.finditer(self.fm, text):
+            path = m.group(1)
+            line_nr = m.group(2)
+            start = m.start(1) - 1
+            end = m.end(2)
+            link = Link(path, line_nr, start, end)
+            links.append(link)
+
+        return links
 
