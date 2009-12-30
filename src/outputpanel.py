@@ -27,6 +27,7 @@ from capture import *
 from gtk import gdk
 import re
 import gio
+from linkparsing import LinkParser
 
 class UniqueById:
     __shared_state = WeakKeyDictionary()
@@ -83,9 +84,11 @@ class OutputPanel(UniqueById):
         self.link_cursor = gdk.Cursor(gdk.HAND2)
         self.normal_cursor = gdk.Cursor(gdk.XTERM)
         
-        self.link_regex = re.compile('((\\./|\\.\\./|/)[^\s:]+|[^\s:]+\\.[^\s:]+)(:([0-9]+))?')
+#       self.link_regex = re.compile('((\\./|\\.\\./|/)[^\s:]+|[^\s:]+\\.[^\s:]+)(:([0-9]+))?')
 
         self.process = None
+	
+	self.link_parser = LinkParser()
 
     def set_process(self, process):
         self.process = process
@@ -123,27 +126,25 @@ class OutputPanel(UniqueById):
             buffer.insert(end_iter, text)
         else:
             buffer.insert_with_tags(end_iter, text, tag)
-        
-        for m in self.link_regex.finditer(text):
-            start = buffer.get_iter_at_mark(insert)
-            start.forward_chars(m.start(0))
-            end = start.copy()
-            end.forward_chars(m.end(0))
-            
-            filename = m.group(1)
 
-            if (os.path.isabs(filename) and os.path.isfile(filename)) or \
-               (os.path.isfile(os.path.join(self.cwd, filename))):
-                buffer.apply_tag(self.link_tag, start, end)
+#        for m in self.link_regex.finditer(text):
+#            start = buffer.get_iter_at_mark(insert)
+#            start.forward_chars(m.start(0))
+#            end = start.copy()
+#            end.forward_chars(m.end(0))
+#
+#            filename = m.group(1)
+
+#            buffer.apply_tag(self.link_tag, start, end)
                 
-                if m.group(4):
-                    start = buffer.get_iter_at_mark(insert)
-                    start.forward_chars(m.start(4))
-                    end = start.copy()
-                    end.forward_chars(m.end(4))
-            
-                    buffer.apply_tag(self.line_tag, start, end)
-        
+#            if m.group(4):
+#            	start = buffer.get_iter_at_mark(insert)
+#            	start.forward_chars(m.start(4))
+#		end = start.copy()
+#            	end.forward_chars(m.end(4))
+
+#            	buffer.apply_tag(self.line_tag, start, end)
+
         buffer.delete_mark(insert)
         gobject.idle_add(self.scroll_to_end)
 
