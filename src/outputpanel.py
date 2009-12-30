@@ -185,8 +185,8 @@ class OutputPanel(UniqueById):
     
     def get_link_at_location(self, view, x, y):
         """
-        Get the link under a specified x,y coordinate or None if no link
-        existed
+        Get the link under a specified x,y coordinate. If no link exists then
+        None is returned.
         """
         buff_x, buff_y = view.window_to_buffer_coords(gtk.TEXT_WINDOW_TEXT,
     			                                      x, y)
