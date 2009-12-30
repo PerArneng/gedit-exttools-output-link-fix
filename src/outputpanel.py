@@ -91,7 +91,7 @@ class OutputPanel(UniqueById):
         self.link_parser = LinkParser()
         self.link_parser.add_parser_provider(GccLinkParserProvider())
         self.link_parser.add_parser_provider(PythonLinkParserProvider())
-        self.links = {}
+        self.tag_to_link_map = {}
 
     def set_process(self, process):
         self.process = process
@@ -130,6 +130,7 @@ class OutputPanel(UniqueById):
         else:
             buffer.insert_with_tags(end_iter, text, tag)
 
+        # find all links and create tags for them
         links = self.link_parser.parse(text)
         for lnk in links:
             start = buffer.get_iter_at_mark(insert)
@@ -145,7 +146,7 @@ class OutputPanel(UniqueById):
             lnk_tag.set_property('underline', pango.UNDERLINE_LOW)
             lnk_tag.set_property('foreground', 'blue')
             
-            self.links[tag_name] = lnk
+            self.tag_to_link_map[tag_name] = lnk
             
             buffer.apply_tag(lnk_tag, start, end)
 
@@ -183,6 +184,10 @@ class OutputPanel(UniqueById):
         return False
     
     def get_link_at_location(self, view, x, y):
+        """
+        Get the link under a specified x,y coordinate or None if no link
+        existed
+        """
         buff_x, buff_y = view.window_to_buffer_coords(gtk.TEXT_WINDOW_TEXT,
     			                                      x, y)
         iter_at_xy = view.get_iter_at_location(buff_x, buff_y)
@@ -191,7 +196,7 @@ class OutputPanel(UniqueById):
         for tag in iter_at_xy.get_tags():
             tag_name = tag.get_property("name")
             if tag_name.startswith("link:"):
-                lnk = self.links[tag_name]
+                lnk = self.tag_to_link_map[tag_name]
                 break
 
         return lnk
