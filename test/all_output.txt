@@ -18,3 +18,14 @@ gcc output ------------
 test.c: In function ‘main’:
 test.c:10: error: request for member ‘x’ in something not a structure or union
 test.c:11: warning: initialization makes integer from pointer without a cast
+
+python output -------------
+
+Traceback (most recent call last):
+  File "test.py", line 10, in <module>
+    err()
+  File "test.py", line 7, in err
+    real_err()
+  File "test.py", line 4, in real_err
+    int('xxx')
+ValueError: invalid literal for int() with base 10: 'xxx'
