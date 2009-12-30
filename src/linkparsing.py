@@ -37,8 +37,8 @@ class Link:
         self.end     = end
 
     def __repr__(self):
-        return "%s[%s](%s:%s)" % (self._path, self._line_nr, 
-                                  self._start, self._end)
+        return "%s[%s](%s:%s)" % (self.path, self.line_nr, 
+                                  self.start, self.end)
 
 class LinkParser:
     """

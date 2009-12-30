@@ -127,6 +127,18 @@ class OutputPanel(UniqueById):
         else:
             buffer.insert_with_tags(end_iter, text, tag)
 
+
+	links = self.link_parser.parse(text)
+	for lnk in links:
+		start = buffer.get_iter_at_mark(insert)
+		start.forward_chars(lnk.start)
+		end = start.copy()
+		end.forward_chars(lnk.end)
+		lnk_tag = buffer.create_tag("%s[%s]" % (lnk.path, lnk.line_nr))
+		lnk_tag.set_property('underline', pango.UNDERLINE_LOW)
+		lnk_tag.set_property('foreground', 'blue')
+		buffer.apply_tag(lnk_tag, start, end)
+
 #        for m in self.link_regex.finditer(text):
 #            start = buffer.get_iter_at_mark(insert)
 #            start.forward_chars(m.start(0))
