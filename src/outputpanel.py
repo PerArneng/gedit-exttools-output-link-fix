@@ -89,6 +89,7 @@ class OutputPanel(UniqueById):
         self.process = None
 	
 	self.link_parser = LinkParser()
+	self.links = {}
 
     def set_process(self, process):
         self.process = process
@@ -134,9 +135,12 @@ class OutputPanel(UniqueById):
 		start.forward_chars(lnk.start)
 		end = start.copy()
 		end.forward_chars(lnk.end)
+		lnk.start = start.get_offset()
+		lnk.end = end.get_offset()
 		lnk_tag = buffer.create_tag("%s[%s]" % (lnk.path, lnk.line_nr))
 		lnk_tag.set_property('underline', pango.UNDERLINE_LOW)
 		lnk_tag.set_property('foreground', 'blue')
+		self.links[lnk_tag] = lnk
 		buffer.apply_tag(lnk_tag, start, end)
 
 #        for m in self.link_regex.finditer(text):
@@ -193,35 +197,33 @@ class OutputPanel(UniqueById):
         self.window.get_active_view().grab_focus()
         return False
     
+    def get_link_at_location(self, view, x, y):
+	buff_x, buff_y = view.window_to_buffer_coords(gtk.TEXT_WINDOW_TEXT,
+						        x, y)
+        iter_at_xy = view.get_iter_at_location(buff_x, buff_y)
+
+	lnk = None
+	for tag in iter_at_xy.get_tags():
+		lnk = self.links[tag]
+		if lnk is not None:
+			break
+	
+	return lnk
+	
+    
     def on_view_button_press_event(self, view, event):
         if event.button != 1 or event.type != gdk.BUTTON_PRESS or \
            event.window != view.get_window(gtk.TEXT_WINDOW_TEXT):
             return False
         
-        x, y = view.window_to_buffer_coords(gtk.TEXT_WINDOW_TEXT, int(event.x), int(event.y))
-        
-        start = view.get_iter_at_location(x, y)
 
-        if not start.has_tag(self.link_tag):
-            return False
-        
-        end = start.copy()
-        start.backward_to_tag_toggle(self.link_tag)
-        line = start.copy()
-        
-        end.forward_to_tag_toggle(self.link_tag)
-        line.forward_to_tag_toggle(self.line_tag)
-
-        if line.compare(end) < 0:
-            tot = line.copy()
-            tot.backward_char()
-            
-            text = start.get_text(tot)
-            toline = int(line.get_text(end))
-        else:
-            text = start.get_text(end)
-            toline = 0
-
+	link = self.get_link_at_location(view, int(event.x), int(event.y))
+	if link is None:
+		return False
+	
+	text = link.path
+	toline = link.line_nr
+	
         gfile = None
         
         if os.path.isabs(text) and os.path.isfile(text):

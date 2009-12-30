@@ -1,8 +1,3 @@
-test.c: In function ‘f’:
-test.c:5: warning: passing argument 1 of ‘f’ makes integer from pointer without a cast
-test.c:3: note: expected ‘int’ but argument is of type ‘char *’
 test.c: In function ‘main’:
-test.c:11: warning: initialization makes pointer from integer without a cast
-test.c:12: warning: initialization makes integer from pointer without a cast
-test.c:13: error: too few arguments to function ‘f’
-test.c:14: error: expected ‘;’ before ‘return’
+test.c:10: error: request for member ‘x’ in something not a structure or union
+test.c:11: warning: initialization makes integer from pointer without a cast

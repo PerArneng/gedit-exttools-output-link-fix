@@ -1,4 +1,4 @@
-
+// this file contains errors on purpose
 
 public class Test {
 	
