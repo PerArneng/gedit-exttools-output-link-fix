@@ -28,6 +28,7 @@ from gtk import gdk
 import re
 import gio
 from linkparsing import LinkParser
+from linkparsing import GccLinkParserProvider
 
 class UniqueById:
     __shared_state = WeakKeyDictionary()
@@ -84,12 +85,11 @@ class OutputPanel(UniqueById):
         self.link_cursor = gdk.Cursor(gdk.HAND2)
         self.normal_cursor = gdk.Cursor(gdk.XTERM)
         
-#       self.link_regex = re.compile('((\\./|\\.\\./|/)[^\s:]+|[^\s:]+\\.[^\s:]+)(:([0-9]+))?')
-
         self.process = None
 	
-	self.link_parser = LinkParser()
-	self.links = {}
+        self.link_parser = LinkParser()
+        self.link_parser.add_parser_provider(GccLinkParserProvider())
+        self.links = {}
 
     def set_process(self, process):
         self.process = process
@@ -128,38 +128,19 @@ class OutputPanel(UniqueById):
         else:
             buffer.insert_with_tags(end_iter, text, tag)
 
-
-	links = self.link_parser.parse(text)
-	for lnk in links:
-		start = buffer.get_iter_at_mark(insert)
-		start.forward_chars(lnk.start)
-		end = start.copy()
-		end.forward_chars(lnk.end)
-		lnk.start = start.get_offset()
-		lnk.end = end.get_offset()
-		lnk_tag = buffer.create_tag("%s[%s]" % (lnk.path, lnk.line_nr))
-		lnk_tag.set_property('underline', pango.UNDERLINE_LOW)
-		lnk_tag.set_property('foreground', 'blue')
-		self.links[lnk_tag] = lnk
-		buffer.apply_tag(lnk_tag, start, end)
-
-#        for m in self.link_regex.finditer(text):
-#            start = buffer.get_iter_at_mark(insert)
-#            start.forward_chars(m.start(0))
-#            end = start.copy()
-#            end.forward_chars(m.end(0))
-#
-#            filename = m.group(1)
-
-#            buffer.apply_tag(self.link_tag, start, end)
-                
-#            if m.group(4):
-#            	start = buffer.get_iter_at_mark(insert)
-#            	start.forward_chars(m.start(4))
-#		end = start.copy()
-#            	end.forward_chars(m.end(4))
-
-#            	buffer.apply_tag(self.line_tag, start, end)
+        links = self.link_parser.parse(text)
+        for lnk in links:
+            start = buffer.get_iter_at_mark(insert)
+            start.forward_chars(lnk.start)
+            end = start.copy()
+            end.forward_chars(lnk.end)
+            lnk.start = start.get_offset()
+            lnk.end = end.get_offset()
+            lnk_tag = buffer.create_tag("%s[%s]" % (lnk.path, lnk.line_nr))
+            lnk_tag.set_property('underline', pango.UNDERLINE_LOW)
+            lnk_tag.set_property('foreground', 'blue')
+            self.links[lnk_tag] = lnk
+            buffer.apply_tag(lnk_tag, start, end)
 
         buffer.delete_mark(insert)
         gobject.idle_add(self.scroll_to_end)
@@ -169,11 +150,8 @@ class OutputPanel(UniqueById):
         panel.show()
         panel.activate_item(self.panel)
     
-    def update_cursor_style(self, view, x, y):
-        x, y = view.window_to_buffer_coords(gtk.TEXT_WINDOW_TEXT, int(x), int(y))
-        piter = view.get_iter_at_location(x, y)
-        
-        if piter.has_tag(self.link_tag):
+    def update_cursor_style(self, view, x, y):       
+        if self.get_link_at_location(view, x, y) is not None:
             cursor = self.link_cursor
         else:
             cursor = self.normal_cursor
@@ -182,7 +160,7 @@ class OutputPanel(UniqueById):
     
     def on_view_motion_notify_event(self, view, event):
         if event.window == view.get_window(gtk.TEXT_WINDOW_TEXT):
-            self.update_cursor_style(view, event.x, event.y)
+            self.update_cursor_style(view, int(event.x), int(event.y))
 
         return False
 
@@ -198,34 +176,32 @@ class OutputPanel(UniqueById):
         return False
     
     def get_link_at_location(self, view, x, y):
-	buff_x, buff_y = view.window_to_buffer_coords(gtk.TEXT_WINDOW_TEXT,
-						        x, y)
+        buff_x, buff_y = view.window_to_buffer_coords(gtk.TEXT_WINDOW_TEXT,
+    			                                      x, y)
         iter_at_xy = view.get_iter_at_location(buff_x, buff_y)
 
-	lnk = None
-	for tag in iter_at_xy.get_tags():
-		lnk = self.links[tag]
-		if lnk is not None:
-			break
+        lnk = None
+        for tag in iter_at_xy.get_tags():
+            lnk = self.links[tag]
+            if lnk is not None:
+                break
+
+        return lnk
 	
-	return lnk
-	
-    
     def on_view_button_press_event(self, view, event):
         if event.button != 1 or event.type != gdk.BUTTON_PRESS or \
            event.window != view.get_window(gtk.TEXT_WINDOW_TEXT):
             return False
-        
 
-	link = self.get_link_at_location(view, int(event.x), int(event.y))
-	if link is None:
-		return False
-	
-	text = link.path
-	toline = link.line_nr
-	
+        link = self.get_link_at_location(view, int(event.x), int(event.y))
+        if link is None:
+            return False
+
+        text = link.path
+        toline = link.line_nr
+
         gfile = None
-        
+
         if os.path.isabs(text) and os.path.isfile(text):
             gfile = gio.File(text)
         elif os.path.isfile(os.path.join(self.cwd, text)):
@@ -233,7 +209,6 @@ class OutputPanel(UniqueById):
             
         if gfile:
             gedit.commands.load_uri(self.window, gfile.get_uri(), None, toline)
-            
             gobject.idle_add(self.idle_grab_focus)
 
 # ex:ts=4:et:

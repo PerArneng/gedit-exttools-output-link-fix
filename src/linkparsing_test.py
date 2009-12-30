@@ -18,11 +18,13 @@
 
 import unittest
 from linkparsing import LinkParser
+from linkparsing import GccLinkParserProvider
 
 class LinkParserTest(unittest.TestCase):
 
     def setUp(self):
         self.p = LinkParser()
+        self.p.add_parser_provider(GccLinkParserProvider())
 
     def test_parse_gcc_simple_test_with_real_output(self):
         gcc_output = """

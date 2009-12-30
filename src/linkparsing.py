@@ -56,9 +56,10 @@ class LinkParser:
     """
 
     def __init__(self):
-        self._providers = [
-            GccLinkParserProvider()
-        ]
+        self._providers = []
+
+    def add_parser_provider(self, provider):
+        self._providers.append(provider)
 
     def parse(self, text):
         """
