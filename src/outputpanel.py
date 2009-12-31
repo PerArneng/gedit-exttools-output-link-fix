@@ -82,9 +82,13 @@ class OutputPanel(UniqueById):
         self.bold_tag.set_property('weight', pango.WEIGHT_BOLD)
 
         self.invalid_link_tag = buffer.create_tag('invalid_link')
-        self.invalid_link_tag.set_property("foreground", "gray")
+        self.invalid_link_tag.set_property("foreground", "#505050")
         self.invalid_link_tag.set_property('underline', pango.UNDERLINE_LOW)
         self.invalid_link_tag.set_property('style', pango.STYLE_OBLIQUE)
+
+        self.link_tag = buffer.create_tag('link')
+        self.link_tag.set_property("foreground", "blue")
+        self.link_tag.set_property('underline', pango.UNDERLINE_LOW)
 
         self.link_cursor = gdk.Cursor(gdk.HAND2)
         self.normal_cursor = gdk.Cursor(gdk.XTERM)
@@ -94,7 +98,7 @@ class OutputPanel(UniqueById):
         self.link_parser = LinkParser()
         self.link_parser.add_provider(GccLinkParserProvider())
         self.link_parser.add_provider(PythonLinkParserProvider())
-        self.tag_to_link_map = {}
+        self.links = {}
 
         self.file_lookup = FileLookup()
         self.file_lookup.add_provider(AbsoluteFileLookupProvider())
@@ -120,6 +124,7 @@ class OutputPanel(UniqueById):
 
     def clear(self):
         self['view'].get_buffer().set_text("")
+        self.links = []
     
     def visible(self):
         panel = self.window.get_bottom_panel()
@@ -140,26 +145,21 @@ class OutputPanel(UniqueById):
         links = self.link_parser.parse(text)
         for lnk in links:
             
-            start = buffer.get_iter_at_mark(insert)
-            end = start.copy()
-            start.forward_chars(lnk.start)
-            end.forward_chars(lnk.end)
+            insert_iter = buffer.get_iter_at_mark(insert)
+            lnk.start = insert_iter.get_offset() + lnk.start
+            lnk.end = insert_iter.get_offset() + lnk.end
             
-            lnk.start = start.get_offset()
-            lnk.end = end.get_offset()
+            start_iter = buffer.get_iter_at_offset(lnk.start)
+            end_iter = buffer.get_iter_at_offset(lnk.end)
             
             tag = None
             if self.file_lookup.lookup(lnk.path) is not None:
-                tag_name = "link:%s[%s]" % (lnk.path, lnk.line_nr)
-                tag = buffer.create_tag(tag_name)
-                tag.set_property('underline', pango.UNDERLINE_LOW)
-                tag.set_property('foreground', 'blue')
-                
-                self.tag_to_link_map[tag_name] = lnk
+                self.links.append(lnk)
+                tag = self.link_tag
             else:
                 tag = self.invalid_link_tag
 
-            buffer.apply_tag(tag, start, end)
+            buffer.apply_tag(tag, start_iter, end_iter)
 
         buffer.delete_mark(insert)
         gobject.idle_add(self.scroll_to_end)
@@ -202,16 +202,14 @@ class OutputPanel(UniqueById):
         buff_x, buff_y = view.window_to_buffer_coords(gtk.TEXT_WINDOW_TEXT,
     			                                      x, y)
         iter_at_xy = view.get_iter_at_location(buff_x, buff_y)
+        offset = iter_at_xy.get_offset()
 
-        lnk = None
-        for tag in iter_at_xy.get_tags():
-            tag_name = tag.get_property("name")
-            if tag_name.startswith("link:"):
-                lnk = self.tag_to_link_map[tag_name]
-                break
+        for lnk in self.links:
+            if offset >= lnk.start and offset <= lnk.end:
+                return lnk
 
-        return lnk
-	
+        return None
+
     def on_view_button_press_event(self, view, event):
         if event.button != 1 or event.type != gdk.BUTTON_PRESS or \
            event.window != view.get_window(gtk.TEXT_WINDOW_TEXT):
