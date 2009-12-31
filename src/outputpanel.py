@@ -2,6 +2,9 @@
 #    Gedit External Tools plugin
 #    Copyright (C) 2005-2006  Steve Frécinaux <steve@istique.net>
 #
+#    Updated:
+#       2010 - Output Hyperlinking - Per Arneng <per.arneng@anyplanet.com>
+#
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
 #    the Free Software Foundation; either version 2 of the License, or
@@ -71,15 +74,15 @@ class OutputPanel(UniqueById):
         self['view'].modify_font(pango.FontDescription('Monospace'))
 
         buffer = self['view'].get_buffer()
-        
+
         self.normal_tag = buffer.create_tag('normal')
-        
+
         self.error_tag = buffer.create_tag('error')
         self.error_tag.set_property('foreground', 'red')
-        
+
         self.italic_tag = buffer.create_tag('italic')
         self.italic_tag.set_property('style', pango.STYLE_OBLIQUE)
-        
+
         self.bold_tag = buffer.create_tag('bold')
         self.bold_tag.set_property('weight', pango.WEIGHT_BOLD)
 
@@ -97,11 +100,15 @@ class OutputPanel(UniqueById):
 
         self.process = None
 
+        # instantiate the linkparser and add the output parser providers
+        # to the parser
         self.link_parser = LinkParser()
         self.link_parser.add_provider(GccLinkParserProvider())
         self.link_parser.add_provider(PythonLinkParserProvider())
         self.links = {}
 
+        # create the file lookup and add the the lookup provider in the order
+        # that they are going to be used when doing the actual lookups
         self.file_lookup = FileLookup()
         self.file_lookup.add_provider(AbsoluteFileLookupProvider())
         self.file_lookup.add_provider(CwdFileLookupProvider())
@@ -129,14 +136,14 @@ class OutputPanel(UniqueById):
     def clear(self):
         self['view'].get_buffer().set_text("")
         self.links = []
-    
+
     def visible(self):
         panel = self.window.get_bottom_panel()
         return panel.props.visible and panel.item_is_active(self.panel)
 
     def write(self, text, tag = None):
         buffer = self['view'].get_buffer()
-	
+
         end_iter = buffer.get_end_iter()
         insert = buffer.create_mark(None, end_iter, True)
 
@@ -145,7 +152,7 @@ class OutputPanel(UniqueById):
         else:
             buffer.insert_with_tags(end_iter, text, tag)
 
-        # find all links and create tags for them
+        # find all links and apply the appropriate tag for them
         links = self.link_parser.parse(text)
         for lnk in links:
             
@@ -155,8 +162,10 @@ class OutputPanel(UniqueById):
             
             start_iter = buffer.get_iter_at_offset(lnk.start)
             end_iter = buffer.get_iter_at_offset(lnk.end)
-            
+
             tag = None
+
+            # if the link points to an existing file then it is a valid link
             if self.file_lookup.lookup(lnk.path) is not None:
                 self.links.append(lnk)
                 tag = self.link_tag
@@ -172,7 +181,7 @@ class OutputPanel(UniqueById):
         panel = self.window.get_bottom_panel()
         panel.show()
         panel.activate_item(self.panel)
-    
+
     def update_cursor_style(self, view, x, y):       
         if self.get_link_at_location(view, x, y) is not None:
             cursor = self.link_cursor
@@ -180,7 +189,7 @@ class OutputPanel(UniqueById):
             cursor = self.normal_cursor
 
         view.get_window(gtk.TEXT_WINDOW_TEXT).set_cursor(cursor)
-    
+
     def on_view_motion_notify_event(self, view, event):
         if event.window == view.get_window(gtk.TEXT_WINDOW_TEXT):
             self.update_cursor_style(view, int(event.x), int(event.y))
@@ -193,25 +202,29 @@ class OutputPanel(UniqueById):
             self.update_cursor_style(view, x, y)
 
         return False
-    
+
     def idle_grab_focus(self):
         self.window.get_active_view().grab_focus()
         return False
-    
+
     def get_link_at_location(self, view, x, y):
         """
         Get the link under a specified x,y coordinate. If no link exists then
         None is returned.
         """
-        buff_x, buff_y = view.window_to_buffer_coords(gtk.TEXT_WINDOW_TEXT,
-    			                                      x, y)
+
+        # get the offset within the buffer from the x,y coordinates
+        buff_x, buff_y = view.window_to_buffer_coords(gtk.TEXT_WINDOW_TEXT, 
+                                                        x, y)
         iter_at_xy = view.get_iter_at_location(buff_x, buff_y)
         offset = iter_at_xy.get_offset()
 
+        # find the first link that contains the offset
         for lnk in self.links:
             if offset >= lnk.start and offset <= lnk.end:
                 return lnk
 
+        # no link was found at x,y
         return None
 
     def on_view_button_press_event(self, view, event):
