@@ -30,6 +30,8 @@ import gio
 from linkparsing import LinkParser
 from linkparsing import GccLinkParserProvider
 from linkparsing import PythonLinkParserProvider
+from filelookup import FileLookup
+from filelookup import AbsoluteFileLookupProvider
 
 class UniqueById:
     __shared_state = WeakKeyDictionary()
@@ -89,9 +91,12 @@ class OutputPanel(UniqueById):
         self.process = None
 	
         self.link_parser = LinkParser()
-        self.link_parser.add_parser_provider(GccLinkParserProvider())
-        self.link_parser.add_parser_provider(PythonLinkParserProvider())
+        self.link_parser.add_provider(GccLinkParserProvider())
+        self.link_parser.add_provider(PythonLinkParserProvider())
         self.tag_to_link_map = {}
+        
+        self.file_lookup = FileLookup()
+        self.file_lookup.add_provider(AbsoluteFileLookupProvider())
 
     def set_process(self, process):
         self.process = process
@@ -212,6 +217,9 @@ class OutputPanel(UniqueById):
 
         text = link.path
         toline = link.line_nr
+
+        f = self.file_lookup.lookup(text)
+        print f
 
         gfile = None
 
