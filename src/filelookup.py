@@ -18,6 +18,7 @@
 
 import os
 import gio
+import gedit
 
 class FileLookup:
     """
@@ -30,6 +31,12 @@ class FileLookup:
         self.providers = []
 
     def add_provider(self, provider):
+        """
+        Adds a lookup provider to this FileLookup instance. It is important in
+        wich order you add your providers since it is in that order the searches
+        is going to be made. You should probably place them in an order starting
+        with the most strict one and ending with the least strict.
+        """
         self.providers.append(provider)
 
     def lookup(self, path):
@@ -80,19 +87,60 @@ class CwdFileLookupProvider(FileLookupProvider):
     This lookup provider tries to find a file specified by the path relative to
     the current working directory.
     """
-    
-    def __init__(self):
-        try:
-            self.cwd = os.getcwd()
-        except OSError:
-            self.cwd = os.getenv('HOME');
-    
+
     def lookup(self, path):
-        real_path = os.path.join(self.cwd, path)
+        try:
+            cwd = os.getcwd()
+        except OSError:
+            cwd = os.getenv('HOME')
+
+        real_path = os.path.join(cwd, path)
+
         if os.path.isfile(real_path):
             return gio.File(real_path)
         else:
             return None
 
+class OpenDocumentRelPathFileLookupProvider(FileLookupProvider):
+    """
+    Tries to see if the path is relative to any directories where the
+    currently open documents reside in. Example: If you have a document opened
+    '/tmp/Makefile' and a lookup is made for 'src/test2.c' then this class
+    will try to find '/tmp/src/test2.c'.
+    """
 
+    def lookup(self, path):
+        if path.startswith('/'):
+            return None
+
+        for doc in gedit.app_get_default().get_documents():
+            uri = doc.get_uri()
+            if uri:
+                rel_path = gio.File(doc.get_uri()).get_parent().get_path()
+                joined_path = os.path.join(rel_path, path)
+                if os.path.isfile(joined_path):
+                    return gio.File(joined_path)
+
+        return None
+
+
+class OpenDocumentFileLookupProvider(FileLookupProvider):
+    """
+    Makes a guess that the if the path that was looked for matches the end
+    of the path of a currently open document then that document is the one
+    that is looked for. Example: If a document is opened called '/tmp/t.c'
+    and a lookup is made for 't.c' or 'tmp/t.c' then both will match since
+    the open document ends with the path that is searched for.
+    """
+
+    def lookup(self, path):
+        if path.startswith('/'):
+            return None
+
+        for doc in gedit.app_get_default().get_documents():
+            uri = doc.get_uri()
+            if uri:
+                if uri.endswith(path):
+                    return gio.File(doc.get_uri())
+        return None
 

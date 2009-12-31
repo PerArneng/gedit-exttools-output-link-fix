@@ -33,6 +33,8 @@ from linkparsing import PythonLinkParserProvider
 from filelookup import FileLookup
 from filelookup import AbsoluteFileLookupProvider
 from filelookup import CwdFileLookupProvider
+from filelookup import OpenDocumentFileLookupProvider
+from filelookup import OpenDocumentRelPathFileLookupProvider
 
 class UniqueById:
     __shared_state = WeakKeyDictionary()
@@ -70,10 +72,10 @@ class OutputPanel(UniqueById):
 
         buffer = self['view'].get_buffer()
         
-        self.normal_tag = buffer.create_tag("normal")
+        self.normal_tag = buffer.create_tag('normal')
         
-        self.error_tag = buffer.create_tag("error")
-        self.error_tag.set_property("foreground", "red")
+        self.error_tag = buffer.create_tag('error')
+        self.error_tag.set_property('foreground', 'red')
         
         self.italic_tag = buffer.create_tag('italic')
         self.italic_tag.set_property('style', pango.STYLE_OBLIQUE)
@@ -82,12 +84,12 @@ class OutputPanel(UniqueById):
         self.bold_tag.set_property('weight', pango.WEIGHT_BOLD)
 
         self.invalid_link_tag = buffer.create_tag('invalid_link')
-        self.invalid_link_tag.set_property("foreground", "#505050")
+        self.invalid_link_tag.set_property('foreground', '#505050')
         self.invalid_link_tag.set_property('underline', pango.UNDERLINE_LOW)
         self.invalid_link_tag.set_property('style', pango.STYLE_OBLIQUE)
 
         self.link_tag = buffer.create_tag('link')
-        self.link_tag.set_property("foreground", "blue")
+        self.link_tag.set_property('foreground', "blue")
         self.link_tag.set_property('underline', pango.UNDERLINE_LOW)
 
         self.link_cursor = gdk.Cursor(gdk.HAND2)
@@ -103,6 +105,8 @@ class OutputPanel(UniqueById):
         self.file_lookup = FileLookup()
         self.file_lookup.add_provider(AbsoluteFileLookupProvider())
         self.file_lookup.add_provider(CwdFileLookupProvider())
+        self.file_lookup.add_provider(OpenDocumentRelPathFileLookupProvider())
+        self.file_lookup.add_provider(OpenDocumentFileLookupProvider())
 
     def set_process(self, process):
         self.process = process
