@@ -32,6 +32,7 @@ from linkparsing import GccLinkParserProvider
 from linkparsing import PythonLinkParserProvider
 from filelookup import FileLookup
 from filelookup import AbsoluteFileLookupProvider
+from filelookup import CwdFileLookupProvider
 
 class UniqueById:
     __shared_state = WeakKeyDictionary()
@@ -79,28 +80,28 @@ class OutputPanel(UniqueById):
         
         self.bold_tag = buffer.create_tag('bold')
         self.bold_tag.set_property('weight', pango.WEIGHT_BOLD)
-        
-        self.link_tag = buffer.create_tag('link')
-        self.link_tag.set_property('underline', pango.UNDERLINE_LOW)
-        
-        self.line_tag = buffer.create_tag('line')
-        
+
+        self.invalid_link_tag = buffer.create_tag('invalid_link')
+        self.invalid_link_tag.set_property("foreground", "gray")
+        self.invalid_link_tag.set_property('underline', pango.UNDERLINE_LOW)
+        self.invalid_link_tag.set_property('style', pango.STYLE_OBLIQUE)
+
         self.link_cursor = gdk.Cursor(gdk.HAND2)
         self.normal_cursor = gdk.Cursor(gdk.XTERM)
-        
+
         self.process = None
-	
+
         self.link_parser = LinkParser()
         self.link_parser.add_provider(GccLinkParserProvider())
         self.link_parser.add_provider(PythonLinkParserProvider())
         self.tag_to_link_map = {}
-        
+
         self.file_lookup = FileLookup()
         self.file_lookup.add_provider(AbsoluteFileLookupProvider())
+        self.file_lookup.add_provider(CwdFileLookupProvider())
 
     def set_process(self, process):
         self.process = process
-        self.cwd = process.cwd
 
     def __getitem__(self, key):
         # Convenience function to get an object from its name
@@ -138,6 +139,7 @@ class OutputPanel(UniqueById):
         # find all links and create tags for them
         links = self.link_parser.parse(text)
         for lnk in links:
+            
             start = buffer.get_iter_at_mark(insert)
             end = start.copy()
             start.forward_chars(lnk.start)
@@ -146,14 +148,18 @@ class OutputPanel(UniqueById):
             lnk.start = start.get_offset()
             lnk.end = end.get_offset()
             
-            tag_name = "link:%s[%s]" % (lnk.path, lnk.line_nr)
-            lnk_tag = buffer.create_tag(tag_name)
-            lnk_tag.set_property('underline', pango.UNDERLINE_LOW)
-            lnk_tag.set_property('foreground', 'blue')
-            
-            self.tag_to_link_map[tag_name] = lnk
-            
-            buffer.apply_tag(lnk_tag, start, end)
+            tag = None
+            if self.file_lookup.lookup(lnk.path) is not None:
+                tag_name = "link:%s[%s]" % (lnk.path, lnk.line_nr)
+                tag = buffer.create_tag(tag_name)
+                tag.set_property('underline', pango.UNDERLINE_LOW)
+                tag.set_property('foreground', 'blue')
+                
+                self.tag_to_link_map[tag_name] = lnk
+            else:
+                tag = self.invalid_link_tag
+
+            buffer.apply_tag(tag, start, end)
 
         buffer.delete_mark(insert)
         gobject.idle_add(self.scroll_to_end)
@@ -215,21 +221,11 @@ class OutputPanel(UniqueById):
         if link is None:
             return False
 
-        text = link.path
-        toline = link.line_nr
+        gfile = self.file_lookup.lookup(link.path)
 
-        f = self.file_lookup.lookup(text)
-        print f
-
-        gfile = None
-
-        if os.path.isabs(text) and os.path.isfile(text):
-            gfile = gio.File(text)
-        elif os.path.isfile(os.path.join(self.cwd, text)):
-            gfile = gio.File(os.path.join(self.cwd, text))
-            
         if gfile:
-            gedit.commands.load_uri(self.window, gfile.get_uri(), None, toline)
+            gedit.commands.load_uri(self.window, gfile.get_uri(), None, 
+                                    link.line_nr)
             gobject.idle_add(self.idle_grab_focus)
 
 # ex:ts=4:et:

@@ -20,6 +20,11 @@ import os
 import gio
 
 class FileLookup:
+    """
+    This class is responsible for looking up files given a part or the whole
+    path of a real file. The lookup is delegated to providers wich use different
+    methods of trying to find the real file.
+    """
 
     def __init__(self):
         self.providers = []
@@ -28,6 +33,13 @@ class FileLookup:
         self.providers.append(provider)
 
     def lookup(self, path):
+        """
+        Tries to find a file specified by the path parameter. It delegates to
+        different lookup providers and the first match is returned. If no file
+        was found then None is returned.
+        
+        path -- the path to find
+        """
         found_file = None
         for provider in self.providers:
             found_file = provider.lookup(path)
@@ -37,19 +49,50 @@ class FileLookup:
         return found_file
 
 class FileLookupProvider:
+    """
+    The base class of all file lookup providers.
+    """
+    
     
     def lookup(self, path):
         """
-        xxxx
+        This method must be implemented by subclasses. Implementors will be
+        given a path and will try to find a matching file. If no file is found
+        then None is returned.
         """
         raise NotImplementedError("need to implement a lookup method")
 
 
 class AbsoluteFileLookupProvider(FileLookupProvider):
+    """
+    This file tries to see if the path given is an absolute path and that the
+    path references a file.
+    """
     
     def lookup(self, path):
         if os.path.isabs(path) and os.path.isfile(path):
             return gio.File(path)
         else:
             return None
+
+class CwdFileLookupProvider(FileLookupProvider):
+    """
+    This lookup provider tries to find a file specified by the path relative to
+    the current working directory.
+    """
+    
+    def __init__(self):
+        try:
+            self.cwd = os.getcwd()
+        except OSError:
+            self.cwd = os.getenv('HOME');
+    
+    def lookup(self, path):
+        real_path = os.path.join(self.cwd, path)
+        if os.path.isfile(real_path):
+            return gio.File(real_path)
+        else:
+            return None
+
+
 
