@@ -6,6 +6,12 @@ ABOUT
   outputs from compilers and tools and provide link so that the correct source
   file should be opened in the editor.
 
+STATUS
+
+  2010-01-01:
+    The code is now merged in to the gedit repository and the code in this
+    repository is no longer maintained. See patch info below.
+
 AUTHOR
 
   Per Arneng
