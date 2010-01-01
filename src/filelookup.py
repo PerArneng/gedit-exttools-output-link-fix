@@ -29,15 +29,10 @@ class FileLookup:
 
     def __init__(self):
         self.providers = []
-
-    def add_provider(self, provider):
-        """
-        Adds a lookup provider to this FileLookup instance. It is important in
-        wich order you add your providers since it is in that order the searches
-        is going to be made. You should probably place them in an order starting
-        with the most strict one and ending with the least strict.
-        """
-        self.providers.append(provider)
+        self.providers.append(AbsoluteFileLookupProvider())
+        self.providers.append(CwdFileLookupProvider())
+        self.providers.append(OpenDocumentRelPathFileLookupProvider())
+        self.providers.append(OpenDocumentFileLookupProvider())
 
     def lookup(self, path):
         """

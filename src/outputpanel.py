@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 #    Gedit External Tools plugin
 #    Copyright (C) 2005-2006  Steve Frécinaux <steve@istique.net>
-#
-#    Updated:
-#       2010 - Output Hyperlinking - Per Arneng <per.arneng@anyplanet.com>
+#    Copyright (C) 2010  Per Arneng <per.arneng@anyplanet.com>
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -30,14 +28,8 @@ from capture import *
 from gtk import gdk
 import re
 import gio
-from linkparsing import LinkParser
-from linkparsing import GccLinkParserProvider
-from linkparsing import PythonLinkParserProvider
-from filelookup import FileLookup
-from filelookup import AbsoluteFileLookupProvider
-from filelookup import CwdFileLookupProvider
-from filelookup import OpenDocumentFileLookupProvider
-from filelookup import OpenDocumentRelPathFileLookupProvider
+from linkparsing import *
+from filelookup import *
 
 class UniqueById:
     __shared_state = WeakKeyDictionary()
@@ -87,33 +79,20 @@ class OutputPanel(UniqueById):
         self.bold_tag.set_property('weight', pango.WEIGHT_BOLD)
 
         self.invalid_link_tag = buffer.create_tag('invalid_link')
-        self.invalid_link_tag.set_property('foreground', '#505050')
-        self.invalid_link_tag.set_property('underline', pango.UNDERLINE_LOW)
-        self.invalid_link_tag.set_property('style', pango.STYLE_OBLIQUE)
 
         self.link_tag = buffer.create_tag('link')
-        self.link_tag.set_property('foreground', "blue")
-        self.link_tag.set_property('underline', pango.UNDERLINE_LOW)
+        self.link_tag.set_property('underline', pango.UNDERLINE_SINGLE)
 
         self.link_cursor = gdk.Cursor(gdk.HAND2)
         self.normal_cursor = gdk.Cursor(gdk.XTERM)
 
         self.process = None
 
-        # instantiate the linkparser and add the output parser providers
-        # to the parser
-        self.link_parser = LinkParser()
-        self.link_parser.add_provider(GccLinkParserProvider())
-        self.link_parser.add_provider(PythonLinkParserProvider())
-        self.links = {}
+        self.links = []
 
-        # create the file lookup and add the the lookup provider in the order
-        # that they are going to be used when doing the actual lookups
+        self.link_parser = LinkParser()
         self.file_lookup = FileLookup()
-        self.file_lookup.add_provider(AbsoluteFileLookupProvider())
-        self.file_lookup.add_provider(CwdFileLookupProvider())
-        self.file_lookup.add_provider(OpenDocumentRelPathFileLookupProvider())
-        self.file_lookup.add_provider(OpenDocumentFileLookupProvider())
+
 
     def set_process(self, process):
         self.process = process
