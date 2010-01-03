@@ -21,7 +21,9 @@ import re
 class Link:
     """
     This class represents a file link from within a string given by the
-    output of some software tool.
+    output of some software tool. A link contains a reference to a file, the
+    line number within the file and the boundaries within the given output
+    string that should be marked as a link.
     """
 
     def __init__(self, path, line_nr, start, end):
@@ -43,7 +45,7 @@ class Link:
 class LinkParser:
     """
     Parses a text using different parsing providers with the goal of finding one
-    or more file links within the text. A typicak example could be the output
+    or more file links within the text. A typical example could be the output
     from a compiler that specifies an error in a specific file. The path of the
     file, the line nr and some more info is then returned so that it can be used
     to be able to navigate from the error output in to the specific file.
@@ -67,6 +69,14 @@ class LinkParser:
         self._providers.append(parser)
 
     def add_regexp(self, regexp):
+        """
+        Adds a regular expression string that should match a link using
+        re.MULTILINE and re.VERBOSE regexp. The area marked as a link should
+        be captured by a group named lnk. The path of the link should be
+        captured by a group named pth. The line number should be captured by
+        a group named ln. To read more about this look at the documentation
+        for the RegexpLinkParser constructor.
+        """
         self._providers.append(RegexpLinkParser(regexp))
 
     def parse(self, text):
@@ -113,7 +123,7 @@ class RegexpLinkParser(AbstractLinkParser):
     def __init__(self, regex):
         """
         Creates a new RegexpLinkParser based on the given regular expression.
-        The regukar expression is multiline and verbose (se python docs on
+        The regular expression is multiline and verbose (se python docs on
         compilation flags). The regular expression should contain three named
         capturing groups 'lnk', 'pth' and 'ln'. 'lnk' represents the area wich
         should be marked as a link in the text. 'pth' is the path that should
