@@ -146,6 +146,7 @@ class RegexpLinkParser(AbstractLinkParser):
 # gcc 'test.c:13: warning: ...'
 # javac 'Test.java:13: ...'
 # ruby 'test.rb:5: ...'
+# scalac 'Test.scala:5: ...'
 REGEXP_STANDARD = r"""
 ^(?P<lnk>
     (?P<pth> .* )

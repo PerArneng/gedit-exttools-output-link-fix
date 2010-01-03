@@ -5,3 +5,4 @@
 * Created regex for valac
 * Changed python parser from a class to regexp
 * Refactored the linkparsing_test.py to make it easier to write tests
+* Verified that scalac works on REGEXP_STANDARD with unit test

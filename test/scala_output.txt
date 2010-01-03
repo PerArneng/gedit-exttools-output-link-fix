@@ -1,0 +1,9 @@
+Test.scala:5: error: type mismatch;
+ found   : java.lang.String("xx")
+ required: int
+        var a:int = "xx";
+                    ^
+Test.scala:7: error: not found: value fakeMethod
+        fakeMethod()
+        ^
+two errors found

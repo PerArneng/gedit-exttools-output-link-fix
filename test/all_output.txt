@@ -49,3 +49,15 @@ test.rb:5: undefined method `fake_method' for main:Object (NoMethodError)
 	from test.rb:3:in `each'
 	from test.rb:3
 1 Hello
+
+scala output -------------
+
+Test.scala:5: error: type mismatch;
+ found   : java.lang.String("xx")
+ required: int
+        var a:int = "xx";
+                    ^
+Test.scala:7: error: not found: value fakeMethod
+        fakeMethod()
+        ^
+two errors found
