@@ -79,7 +79,7 @@ class LinkParser:
 
         return links
 
-class LinkParserProvider:
+class LinkParserProvider(object):
     """The "abstract" base class for link parses"""
 
     def parse(self, text):
@@ -94,14 +94,14 @@ class LinkParserProvider:
         """
         raise NotImplementedError("need to implement a parse method")
 
-class GccLinkParserProvider(LinkParserProvider):
+class RegexLinkParserProvider(LinkParserProvider):
 
-    def __init__(self):
-        self.fm = re.compile("^(.*)\:(\d+)\:", re.MULTILINE)
+    def __init__(self, regex):
+        self.re = re.compile(regex, re.MULTILINE)
 
     def parse(self, text):
         links = []
-        for m in re.finditer(self.fm, text):
+        for m in re.finditer(self.re, text):
             path = m.group(1)
             line_nr = m.group(2)
             start = m.start(1)
@@ -110,6 +110,11 @@ class GccLinkParserProvider(LinkParserProvider):
             links.append(link)
 
         return links
+
+class GccLinkParserProvider(RegexLinkParserProvider):
+
+    def __init__(self):
+        super(GccLinkParserProvider, self).__init__("^(.*)\:(\d+)\:")
 
 class PythonLinkParserProvider(LinkParserProvider):
 
