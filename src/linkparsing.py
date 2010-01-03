@@ -58,37 +58,10 @@ class LinkParser:
 
     def __init__(self):
         self._providers = []
-        # gcc 'test.c:13: warning: ...'
-        self.add_regexp(
-            r"""^(?P<lnk>
-                    (?P<pth> .* )
-                    \:
-                    (?P<ln> \d+)
-                )
-                \:\s(warning|error|note)""")
-        # python '  File "test.py", line 13'
-        self.add_regexp(
-            r"""^\s\sFile\s
-                (?P<lnk>
-                    \"
-                    (?P<pth> [^\"]+ )
-                    \",\sline\s
-                    (?P<ln> \d+ )
-                 ),""") 
-        # javac 'Test.java:13: ...'
-        self.add_regexp("^(?P<lnk>(?P<pth>.*\.java)\:(?P<ln>\d+))\:\s") 
-        # valac 'Test.vala:13.1-13.3: ...'
-        self.add_regexp(
-            r"""^(?P<lnk> 
-                    (?P<pth> 
-                        .*vala
-                    )
-                    \:
-                    (?P<ln>
-                        \d+
-                    )
-                    \.\d+-\d+\.\d+
-                 )\: """)
+        self.add_regexp(REGEXP_GCC)
+        self.add_regexp(REGEXP_PYTHON) 
+        self.add_regexp(REGEXP_JAVAC) 
+        self.add_regexp(REGEXP_VALAC)
 
     def add_parser(self, parser):
         self._providers.append(parser)
@@ -159,5 +132,46 @@ class RegexpLinkParser(AbstractLinkParser):
             links.append(link)
 
         return links
+
+# gcc 'test.c:13: warning: ...'
+REGEXP_GCC = r"""
+^(?P<lnk>
+    (?P<pth> .* )
+    \:
+    (?P<ln> \d+)
+ )
+\:\s(warning|error|note)"""
+
+# python '  File "test.py", line 13'
+REGEXP_PYTHON = r"""
+^\s\sFile\s
+(?P<lnk>
+    \"
+    (?P<pth> [^\"]+ )
+    \",\sline\s
+    (?P<ln> \d+ )
+),"""
+
+# javac 'Test.java:13: ...'
+REGEXP_JAVAC = r"""
+^(?P<lnk>
+    (?P<pth> .*\.java )
+    \:
+    (?P<ln> \d+ )
+ )
+ \:\s"""
+
+# valac 'Test.vala:13.1-13.3: ...'
+REGEXP_VALAC = r"""
+^(?P<lnk> 
+    (?P<pth> 
+        .*vala
+    )
+    \:
+    (?P<ln>
+        \d+
+    )
+    \.\d+-\d+\.\d+
+ )\: """
 
 # ex:ts=4:et:
