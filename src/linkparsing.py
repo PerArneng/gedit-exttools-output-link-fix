@@ -49,16 +49,24 @@ class LinkParser:
     to be able to navigate from the error output in to the specific file.
 
     The actual work of parsing the text is done by instances of classes that
-    inherits from LinkParserProvider. To add a new parser just create a class
-    that inherits from LinkParserProvider and override the parse method. Then
-    you need to register the class in the _provider list of this class wich is
-    done in the class constructor.
+    inherits from AbstractLinkParser or by regular expressions. To add a new
+    parser just create a class that inherits from AbstractLinkParser and then
+    register in this class cunstructor using the method add_parser. If you want
+    to add a regular expression then just call add_regexp in this class
+    constructor and provide your regexp string as argument.
     """
 
     def __init__(self):
         self._providers = []
-        self._providers.append(GccLinkParserProvider())
-        self._providers.append(PythonLinkParserProvider())
+        self.add_regexp("^(.*)\:(\d+)\: (warning|error|note)") # gcc
+        self.add_parser(PythonLinkParser())
+        self.add_regexp("^(.*\.java)\:(\d+)\: ") # javac
+
+    def add_parser(self, parser):
+        self._providers.append(parser)
+
+    def add_regexp(self, regexp):
+        self._providers.append(RegexpLinkParser(regexp))
 
     def parse(self, text):
         """
@@ -79,7 +87,7 @@ class LinkParser:
 
         return links
 
-class LinkParserProvider(object):
+class AbstractLinkParser(object):
     """The "abstract" base class for link parses"""
 
     def parse(self, text):
@@ -94,9 +102,20 @@ class LinkParserProvider(object):
         """
         raise NotImplementedError("need to implement a parse method")
 
-class RegexLinkParserProvider(LinkParserProvider):
+class RegexpLinkParser(AbstractLinkParser):
+    """
+    A class that represents parsers that only use one single regular expression.
+    It can be used by subclasses or by itself. See the constructor documentation
+    for details about the rules surrouning the regexp.
+    """
 
     def __init__(self, regex):
+        """
+        Creates a new RegexpLinkParser based on the given regular expression.
+        It is important that the 1:st capturing group of the regular expression
+        contains the path and that the 2:nd capturing group contains the line
+        number.
+        """
         self.re = re.compile(regex, re.MULTILINE)
 
     def parse(self, text):
@@ -111,27 +130,22 @@ class RegexLinkParserProvider(LinkParserProvider):
 
         return links
 
-class GccLinkParserProvider(RegexLinkParserProvider):
+class PythonLinkParser(RegexpLinkParser):
 
     def __init__(self):
-        super(GccLinkParserProvider, self).__init__("^(.*)\:(\d+)\:")
-
-class PythonLinkParserProvider(LinkParserProvider):
-
-    def __init__(self):
-        # example:
-        #  File "test.py", line 10, in <module>
-        self.fm = re.compile("^  File \"([^\"]+)\", line (\d+),", re.MULTILINE)
+        # example: '  File "test.py", line 10, in <module>'
+        super(PythonLinkParser, self).__init__(
+                                       "^  File \"([^\"]+)\", line (\d+),")
 
     def parse(self, text):
-        links = []
-        for m in re.finditer(self.fm, text):
-            path = m.group(1)
-            line_nr = m.group(2)
-            start = m.start(1) - 1
-            end = m.end(2)
-            link = Link(path, line_nr, start, end)
-            links.append(link)
+        """
+        Parse with the help of the regular expression but make sure that the
+        link also includes the initial " character so it looks nice.
+        """
+        links = super(PythonLinkParser, self).parse(text)
+
+        for lnk in links:
+            lnk.start = lnk.start - 1
 
         return links
 
