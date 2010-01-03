@@ -151,11 +151,12 @@ class RegexpLinkParser(AbstractLinkParser):
 # scalac 'Test.scala:5: ...'
 # 6g (go) 'test.go:9: ...'
 REGEXP_STANDARD = r"""
-^(?P<lnk>
-    (?P<pth> .* )
+^
+(?P<lnk>
+    (?P<pth> .*[a-z0-9] )
     \:
     (?P<ln> \d+)
- )
+)
 \:\s"""
 
 # python '  File "test.py", line 13'
