@@ -28,8 +28,8 @@ from capture import *
 from gtk import gdk
 import re
 import gio
-from linkparsing import *
-from filelookup import *
+import linkparsing
+import filelookup
 
 class UniqueById:
     __shared_state = WeakKeyDictionary()
@@ -90,9 +90,8 @@ class OutputPanel(UniqueById):
 
         self.links = []
 
-        self.link_parser = LinkParser()
-        self.file_lookup = FileLookup()
-
+        self.link_parser = linkparsing.LinkParser()
+        self.file_lookup = filelookup.FileLookup()
 
     def set_process(self, process):
         self.process = process

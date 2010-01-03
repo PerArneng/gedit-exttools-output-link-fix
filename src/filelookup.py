@@ -39,7 +39,7 @@ class FileLookup:
         Tries to find a file specified by the path parameter. It delegates to
         different lookup providers and the first match is returned. If no file
         was found then None is returned.
-        
+
         path -- the path to find
         """
         found_file = None
@@ -47,15 +47,15 @@ class FileLookup:
             found_file = provider.lookup(path)
             if found_file is not None:
                 break
-                
+
         return found_file
+
 
 class FileLookupProvider:
     """
     The base class of all file lookup providers.
     """
-    
-    
+
     def lookup(self, path):
         """
         This method must be implemented by subclasses. Implementors will be
@@ -70,12 +70,13 @@ class AbsoluteFileLookupProvider(FileLookupProvider):
     This file tries to see if the path given is an absolute path and that the
     path references a file.
     """
-    
+
     def lookup(self, path):
         if os.path.isabs(path) and os.path.isfile(path):
             return gio.File(path)
         else:
             return None
+
 
 class CwdFileLookupProvider(FileLookupProvider):
     """
@@ -96,6 +97,7 @@ class CwdFileLookupProvider(FileLookupProvider):
         else:
             return None
 
+
 class OpenDocumentRelPathFileLookupProvider(FileLookupProvider):
     """
     Tries to see if the path is relative to any directories where the
@@ -109,12 +111,13 @@ class OpenDocumentRelPathFileLookupProvider(FileLookupProvider):
             return None
 
         for doc in gedit.app_get_default().get_documents():
-            uri = doc.get_uri()
-            if uri:
-                rel_path = gio.File(doc.get_uri()).get_parent().get_path()
-                joined_path = os.path.join(rel_path, path)
-                if os.path.isfile(joined_path):
-                    return gio.File(joined_path)
+            if doc.is_local():
+                location = doc.get_location()
+                if location:
+                    rel_path = location.get_parent().get_path()
+                    joined_path = os.path.join(rel_path, path)
+                    if os.path.isfile(joined_path):
+                        return gio.File(joined_path)
 
         return None
 
@@ -133,9 +136,10 @@ class OpenDocumentFileLookupProvider(FileLookupProvider):
             return None
 
         for doc in gedit.app_get_default().get_documents():
-            uri = doc.get_uri()
-            if uri:
-                if uri.endswith(path):
-                    return gio.File(doc.get_uri())
+            if doc.is_local():
+                location = doc.get_location()
+                if location and location.get_uri().endswith(path):
+                    return location
         return None
 
+# ex:ts=4:et:
