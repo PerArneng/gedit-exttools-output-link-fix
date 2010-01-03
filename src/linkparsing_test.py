@@ -139,6 +139,30 @@ test.rb:5: undefined method `fake_method' for main:Object (NoMethodError)
         lnk = links[0]
         self.assert_link(lnk, "Test.scala", 7)
         self.assert_link_text(line, lnk, 'Test.scala:7')
+        
+    def test_parse_go_6g_one_line(self):
+        line = "test.go:9: undefined: FakeMethod"
+        links = self.p.parse(line)
+        self.assert_link_count(links, 1)
+        lnk = links[0]
+        self.assert_link(lnk, "test.go", 9)
+        self.assert_link_text(line, lnk, 'test.go:9')
+
+    def test_parse_perl_one_line(self):
+        line = 'syntax error at test.pl line 889, near "$fake_var'
+        links = self.p.parse(line)
+        self.assert_link_count(links, 1)
+        lnk = links[0]
+        self.assert_link(lnk, "test.pl", 889)
+        self.assert_link_text(line, lnk, 'test.pl line 889')
+
+    def test_parse_mcs_one_line(self):
+        line = 'Test.cs(12,7): error CS0103: The name `fakeMethod'
+        links = self.p.parse(line)
+        self.assert_link_count(links, 1)
+        lnk = links[0]
+        self.assert_link(lnk, "Test.cs", 12)
+        self.assert_link_text(line, lnk, 'Test.cs(12,7)')
 
 if __name__ == '__main__':
     unittest.main()

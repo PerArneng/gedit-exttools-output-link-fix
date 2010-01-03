@@ -64,6 +64,8 @@ class LinkParser:
         self.add_regexp(REGEXP_PYTHON)
         self.add_regexp(REGEXP_VALAC)
         self.add_regexp(REGEXP_RUBY)
+        self.add_regexp(REGEXP_PERL)
+        self.add_regexp(REGEXP_MCS)
 
     def add_parser(self, parser):
         self._providers.append(parser)
@@ -77,7 +79,7 @@ class LinkParser:
         a group named ln. To read more about this look at the documentation
         for the RegexpLinkParser constructor.
         """
-        self._providers.append(RegexpLinkParser(regexp))
+        self.add_parser(RegexpLinkParser(regexp))
 
     def parse(self, text):
         """
@@ -147,6 +149,7 @@ class RegexpLinkParser(AbstractLinkParser):
 # javac 'Test.java:13: ...'
 # ruby 'test.rb:5: ...'
 # scalac 'Test.scala:5: ...'
+# 6g (go) 'test.go:9: ...'
 REGEXP_STANDARD = r"""
 ^(?P<lnk>
     (?P<pth> .* )
@@ -194,5 +197,25 @@ REGEXP_RUBY = r"""
     )
  )"""
 
+# perl 'syntax error at test.pl line 88, near "$fake_var'
+REGEXP_PERL = r"""
+\sat\s
+(?P<lnk>
+    (?P<pth> .* )
+    \sline\s
+    (?P<ln> \d+ )
+)"""
+
+# mcs (C#) 'Test.cs(12,7): error CS0103: The name `fakeMethod'
+REGEXP_MCS = r"""
+^
+(?P<lnk>
+    (?P<pth> .*\.[cC][sS] )
+    \(
+    (?P<ln> \d+ )
+    ,\d+\)
+)
+\:\s
+"""
 
 # ex:ts=4:et:

@@ -1,0 +1,3 @@
+test.go:7: cannot use "xx" (type string) as type int in assignment
+test.go:7: s declared and not used
+test.go:9: undefined: FakeMethod

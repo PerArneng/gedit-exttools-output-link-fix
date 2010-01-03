@@ -61,3 +61,22 @@ Test.scala:7: error: not found: value fakeMethod
         fakeMethod()
         ^
 two errors found
+
+go 6g output -----------
+
+test.go:7: cannot use "xx" (type string) as type int in assignment
+test.go:7: s declared and not used
+test.go:9: undefined: FakeMethod
+
+perl output ------------
+
+syntax error at test.pl line 4, near ") {"
+syntax error at test.pl line 8, near "$fake_var
+}"
+Execution of test.pl aborted due to compilation errors.
+
+mcs output ------------
+
+Test.cs(11,11): error CS0029: Cannot implicitly convert type `string' to `int'
+Test.cs(12,7): error CS0103: The name `fakeMethod' does not exist in the current context
+Compilation failed: 2 error(s), 0 warnings

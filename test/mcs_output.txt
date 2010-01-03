@@ -1,0 +1,3 @@
+Test.cs(11,11): error CS0029: Cannot implicitly convert type `string' to `int'
+Test.cs(12,7): error CS0103: The name `fakeMethod' does not exist in the current context
+Compilation failed: 2 error(s), 0 warnings

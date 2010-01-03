@@ -1,8 +1,14 @@
 2010-01-03:
 * Made it simpler to add regular expression based parsers
 * Regexp is now verbose and expects named capturing groups lnk, pth and ln
-* Created a standard regexp that covers gcc, javac and parts of ruby
+* Created a standard regexp that covers ~ "\n/tmp/my_file.ext:23: ..."
 * Created regex for valac
 * Changed python parser from a class to regexp
 * Refactored the linkparsing_test.py to make it easier to write tests
 * Verified that scalac works on REGEXP_STANDARD with unit test
+* Verified that 6g (go) works on REGEXP_STANDARD with unit test
+* Added regexp for perl output
+* Added regexp for mcs (c#) output
+* tools supported (verified) to date:
+    gcc, python, javac, valac, ruby, scalac, 6g (go), perl, mcs (c#)
+
