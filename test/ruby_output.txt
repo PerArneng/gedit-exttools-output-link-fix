@@ -1,0 +1,4 @@
+test.rb:5: undefined method `fake_method' for main:Object (NoMethodError)
+	from test.rb:3:in `each'
+	from test.rb:3
+1 Hello

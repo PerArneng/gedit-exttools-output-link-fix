@@ -116,6 +116,20 @@ Test.vala:14.13-14.21: error: Assignment: Cannot convert from `string' to `int'
         self.assert_link(lnk, "Test.vala", 14)
         self.assert_link_text(output, lnk, 'Test.vala:14.13-14.21') 
 
+    def test_parse_ruby_simple_test_with_real_output(self):
+        output = """
+test.rb:5: undefined method `fake_method' for main:Object (NoMethodError)
+	from test.rb:3:in `each'
+	from test.rb:3
+"""
+        links = self.p.parse(output)
+        self.assert_link_count(links, 3)
+        lnk = links[0]
+        self.assert_link(lnk, "test.rb", 5)
+        self.assert_link_text(output, lnk, 'test.rb:5')
+        lnk = links[1]
+        self.assert_link(lnk, "test.rb", 3)
+        self.assert_link_text(output, lnk, 'test.rb:3')
 
 if __name__ == '__main__':
     unittest.main()

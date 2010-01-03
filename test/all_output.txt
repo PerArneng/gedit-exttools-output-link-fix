@@ -42,3 +42,10 @@ Test.vala:14.13-14.21: error: Assignment: Cannot convert from `string' to `int'
         int a = "xxx";
             ^^^^^^^^^
 Compilation failed: 3 error(s), 0 warning(s)
+
+ruby output ----------------
+
+test.rb:5: undefined method `fake_method' for main:Object (NoMethodError)
+	from test.rb:3:in `each'
+	from test.rb:3
+1 Hello

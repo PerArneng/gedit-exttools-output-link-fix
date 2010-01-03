@@ -60,10 +60,10 @@ class LinkParser:
 
     def __init__(self):
         self._providers = []
-        self.add_regexp(REGEXP_GCC)
-        self.add_regexp(REGEXP_PYTHON) 
-        self.add_regexp(REGEXP_JAVAC) 
+        self.add_regexp(REGEXP_STANDARD)
+        self.add_regexp(REGEXP_PYTHON)
         self.add_regexp(REGEXP_VALAC)
+        self.add_regexp(REGEXP_RUBY)
 
     def add_parser(self, parser):
         self._providers.append(parser)
@@ -144,13 +144,15 @@ class RegexpLinkParser(AbstractLinkParser):
         return links
 
 # gcc 'test.c:13: warning: ...'
-REGEXP_GCC = r"""
+# javac 'Test.java:13: ...'
+# ruby 'test.rb:5: ...'
+REGEXP_STANDARD = r"""
 ^(?P<lnk>
     (?P<pth> .* )
     \:
     (?P<ln> \d+)
  )
-\:\s(warning|error|note)"""
+\:\s"""
 
 # python '  File "test.py", line 13'
 REGEXP_PYTHON = r"""
@@ -161,15 +163,6 @@ REGEXP_PYTHON = r"""
     \",\sline\s
     (?P<ln> \d+ )
 ),"""
-
-# javac 'Test.java:13: ...'
-REGEXP_JAVAC = r"""
-^(?P<lnk>
-    (?P<pth> .*\.java )
-    \:
-    (?P<ln> \d+ )
- )
- \:\s"""
 
 # valac 'Test.vala:13.1-13.3: ...'
 REGEXP_VALAC = r"""
@@ -183,5 +176,22 @@ REGEXP_VALAC = r"""
     )
     \.\d+-\d+\.\d+
  )\: """
+
+#ruby
+#test.rb:5: ... 
+#	from test.rb:3:in `each'
+# fist line parsed by REGEXP_STANDARD
+REGEXP_RUBY = r"""
+^\s+from\s
+(?P<lnk> 
+    (?P<pth> 
+        .*
+    )
+    \:
+    (?P<ln>
+        \d+
+    )
+ )"""
+
 
 # ex:ts=4:et:
