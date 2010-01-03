@@ -104,6 +104,19 @@ ValueError: invalid literal for int() with base 10: 'xxx'
         self.assert_link(lnk, "/tmp/Test.java", 10)
         self.assert_link_text(line, lnk, '/tmp/Test.java:10')
 
+    def test_parse_valac_simple_test_with_real_output(self):
+        output = """
+Test.vala:14.13-14.21: error: Assignment: Cannot convert from `string' to `int'
+        int a = "xxx";
+            ^^^^^^^^^
+"""
+        links = self.p.parse(output)
+        self.assert_link_count(links, 1)
+        lnk = links[0]
+        self.assert_link(lnk, "Test.vala", 14)
+        self.assert_link_text(output, lnk, 'Test.vala:14.13-14.21') 
+
+
 if __name__ == '__main__':
     unittest.main()
 

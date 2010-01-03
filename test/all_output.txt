@@ -29,3 +29,16 @@ Traceback (most recent call last):
   File "test.py", line 4, in real_err
     int('xxx')
 ValueError: invalid literal for int() with base 10: 'xxx'
+
+valac output ---------------
+
+Test.vala:9.9-9.23: error: Return: Cannot convert from `string' to `int'
+        return "error";
+        ^^^^^^^^^^^^^^^
+Test.vala:13.9-13.9: error: The name `c' does not exist in the context of `Test.HelloObject.main'
+        c();
+        ^
+Test.vala:14.13-14.21: error: Assignment: Cannot convert from `string' to `int'
+        int a = "xxx";
+            ^^^^^^^^^
+Compilation failed: 3 error(s), 0 warning(s)

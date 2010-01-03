@@ -58,9 +58,37 @@ class LinkParser:
 
     def __init__(self):
         self._providers = []
-        self.add_regexp("^(.*)\:(\d+)\: (warning|error|note)") # gcc
-        self.add_parser(PythonLinkParser())
-        self.add_regexp("^(.*\.java)\:(\d+)\: ") # javac
+        # gcc 'test.c:13: warning: ...'
+        self.add_regexp(
+            r"""^(?P<lnk>
+                    (?P<pth> .* )
+                    \:
+                    (?P<ln> \d+)
+                )
+                \:\s(warning|error|note)""")
+        # python '  File "test.py", line 13'
+        self.add_regexp(
+            r"""^\s\sFile\s
+                (?P<lnk>
+                    \"
+                    (?P<pth> [^\"]+ )
+                    \",\sline\s
+                    (?P<ln> \d+ )
+                 ),""") 
+        # javac 'Test.java:13: ...'
+        self.add_regexp("^(?P<lnk>(?P<pth>.*\.java)\:(?P<ln>\d+))\:\s") 
+        # valac 'Test.vala:13.1-13.3: ...'
+        self.add_regexp(
+            r"""^(?P<lnk> 
+                    (?P<pth> 
+                        .*vala
+                    )
+                    \:
+                    (?P<ln>
+                        \d+
+                    )
+                    \.\d+-\d+\.\d+
+                 )\: """)
 
     def add_parser(self, parser):
         self._providers.append(parser)
@@ -112,40 +140,23 @@ class RegexpLinkParser(AbstractLinkParser):
     def __init__(self, regex):
         """
         Creates a new RegexpLinkParser based on the given regular expression.
-        It is important that the 1:st capturing group of the regular expression
-        contains the path and that the 2:nd capturing group contains the line
-        number.
+        The regukar expression is multiline and verbose (se python docs on
+        compilation flags). The regular expression should contain three named
+        capturing groups 'lnk', 'pth' and 'ln'. 'lnk' represents the area wich
+        should be marked as a link in the text. 'pth' is the path that should
+        be looked for and 'ln' is the line number in that file.
         """
-        self.re = re.compile(regex, re.MULTILINE)
+        self.re = re.compile(regex, re.MULTILINE | re.VERBOSE)
 
     def parse(self, text):
         links = []
         for m in re.finditer(self.re, text):
-            path = m.group(1)
-            line_nr = m.group(2)
-            start = m.start(1)
-            end = m.end(2)
+            path = m.group("pth")
+            line_nr = m.group("ln")
+            start = m.start("lnk")
+            end = m.end("lnk")
             link = Link(path, line_nr, start, end)
             links.append(link)
-
-        return links
-
-class PythonLinkParser(RegexpLinkParser):
-
-    def __init__(self):
-        # example: '  File "test.py", line 10, in <module>'
-        super(PythonLinkParser, self).__init__(
-                                       "^  File \"([^\"]+)\", line (\d+),")
-
-    def parse(self, text):
-        """
-        Parse with the help of the regular expression but make sure that the
-        link also includes the initial " character so it looks nice.
-        """
-        links = super(PythonLinkParser, self).parse(text)
-
-        for lnk in links:
-            lnk.start = lnk.start - 1
 
         return links
 
