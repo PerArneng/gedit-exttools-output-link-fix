@@ -1,4 +1,3 @@
-
 ABOUT
 
   This project aims to fix the linking of files from the output of the
@@ -8,7 +7,7 @@ ABOUT
 
 STATUS
 
-  2010-01-01:
+  2010-01-03:
     The code is now merged in to the gedit repository and the code in this
     repository is no longer maintained. See patch info below.
 
@@ -16,6 +15,7 @@ AUTHOR
 
   Per Arneng
 
-GEDIT PATCH
+GEDIT PATCHES
 
   https://bugzilla.gnome.org/show_bug.cgi?id=605833
+  https://bugzilla.gnome.org/show_bug.cgi?id=605988
